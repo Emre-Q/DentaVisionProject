@@ -1,0 +1,493 @@
+/* =============================================================================
+   DentaVision - static/css/style.css
+   =============================================================================
+   KONSEPT: "Radyoloji Lightbox" (Klinik Işık Kutusu)
+   VURGU: Koyu/sakin zemin (#0b0f14), soğuk tarama ışığı (#6fc3ff) ve 
+          kritik bulgular/anomaliler için kehribar uyarısı (#ff9d4d).
+   ============================================================================= */
+
+:root {
+    /* --- Renk Paleti --- */
+    --c-zemin: #0b0f14; /* Klinik karanlık oda zemini */
+    --c-panel: #12181f; /* Arayüz panelleri */
+    --c-panel-ust: #171f28; /* Form input arka planları */
+    --c-cizgi: #232d38; /* İnce ayraçlar ve sınırlar */
+    --c-scan: #6fc3ff; /* Film/Tarama Işığı (Ana Vurgu) */
+    --c-scan-soluk: #6fc3ff33;
+    --c-amber: #ff9d4d; /* Patoloji / Anomali uyarısı */
+    --c-metin: #e7edf3;
+    --c-metin-soluk: #8593a3;
+    --c-basari: #4ade80;
+    --c-hata: #ff6b6b;
+    /* --- Tipografi --- */
+    --f-display: 'Space Grotesk', sans-serif;
+    --f-govde: 'Inter', sans-serif;
+    --f-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--c-zemin);
+    background-image: radial-gradient(ellipse 80% 50% at 50% -20%, #14202c 0%, transparent 60%);
+    color: var(--c-metin);
+    font-family: var(--f-govde);
+    min-height: 100vh;
+}
+
+/* ---------------------------------------------------------------- ÖZEL SCROLLBAR */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--c-zemin);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--c-cizgi);
+    border-radius: 4px;
+}
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--c-scan-soluk);
+    }
+
+/* ---------------------------------------------------------------- ÜST ÇUBUK */
+.ust-cubuk {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--c-cizgi);
+}
+
+.logo-grubu {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-ikon {
+    flex-shrink: 0;
+}
+
+.logo-metin {
+    display: block;
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+}
+
+.logo-alt {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--c-metin-soluk);
+    letter-spacing: 0.03em;
+}
+
+.durum-gostergesi {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--f-mono);
+    font-size: 0.78rem;
+    color: var(--c-metin-soluk);
+}
+
+.durum-nokta {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--c-basari);
+    box-shadow: 0 0 8px var(--c-basari);
+}
+
+/* ---------------------------------------------------------------- ANA GÖVDE VE PANELLER */
+.ana-govde {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 28px;
+    max-width: 1280px;
+    margin: 32px auto;
+    padding: 0 32px;
+}
+
+@media (max-width: 880px) {
+    .ana-govde {
+        grid-template-columns: 1fr;
+    }
+}
+
+.panel {
+    background: var(--c-panel);
+    border: 1px solid var(--c-cizgi);
+    border-radius: 14px;
+    padding: 26px;
+}
+
+.panel-baslik {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+    .panel-baslik.ikinci {
+        margin-top: 28px;
+    }
+
+    .panel-baslik h2 {
+        font-family: var(--f-display);
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+.panel-no {
+    font-family: var(--f-mono);
+    font-size: 0.75rem;
+    color: var(--c-scan);
+    border: 1px solid var(--c-scan-soluk);
+    border-radius: 4px;
+    padding: 1px 6px;
+}
+
+/* ---------------------------------------------------------------- FORM ELEMANLARI */
+.alan-grubu {
+    margin-bottom: 16px;
+}
+
+    .alan-grubu label {
+        display: block;
+        font-size: 0.78rem;
+        color: var(--c-metin-soluk);
+        margin-bottom: 6px;
+        letter-spacing: 0.01em;
+    }
+
+input, textarea {
+    width: 100%;
+    background: var(--c-panel-ust);
+    border: 1px solid var(--c-cizgi);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--c-metin);
+    font-family: var(--f-govde);
+    font-size: 0.9rem;
+    resize: vertical;
+    transition: border-color 0.15s ease;
+}
+
+    input.mono {
+        font-family: var(--f-mono);
+        letter-spacing: 0.02em;
+    }
+
+    input:focus, textarea:focus {
+        outline: none;
+        border-color: var(--c-scan);
+        box-shadow: 0 0 0 3px var(--c-scan-soluk);
+    }
+
+/* ---------------------------------------------------------------- YÜKLEME ALANI (Viewfinder İmza Tasarımı) */
+.lightbox-yukleme {
+    display: block;
+    cursor: pointer;
+    margin-bottom: 18px;
+}
+
+.lightbox-cerceve {
+    position: relative;
+    min-height: 200px;
+    border-radius: 10px;
+    background: repeating-linear-gradient(0deg, #0e141b 0px, #0e141b 1px, transparent 1px, transparent 24px), repeating-linear-gradient(90deg, #0e141b 0px, #0e141b 1px, transparent 1px, transparent 24px), #0a0e13;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.lightbox-yukleme:hover .lightbox-cerceve {
+    box-shadow: 0 0 0 1px var(--c-scan-soluk), 0 0 24px -6px var(--c-scan-soluk);
+}
+
+.kose {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--c-scan);
+    opacity: 0.8;
+}
+
+.ku {
+    top: 8px;
+    left: 8px;
+    border-right: none;
+    border-bottom: none;
+}
+
+.kg {
+    top: 8px;
+    right: 8px;
+    border-left: none;
+    border-bottom: none;
+}
+
+.au {
+    bottom: 8px;
+    left: 8px;
+    border-right: none;
+    border-top: none;
+}
+
+.ag {
+    bottom: 8px;
+    right: 8px;
+    border-left: none;
+    border-top: none;
+}
+
+.yukleme-ipucu {
+    text-align: center;
+    color: var(--c-metin-soluk);
+    padding: 20px;
+}
+
+    .yukleme-ipucu p {
+        margin: 10px 0 0;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+
+    .yukleme-ipucu span {
+        color: var(--c-metin-soluk);
+        opacity: 0.7;
+        font-size: 0.78rem;
+    }
+
+.onizleme {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    max-height: 260px;
+}
+
+.analiz-butonu {
+    width: 100%;
+    background: var(--c-scan);
+    color: #0b0f14;
+    border: none;
+    border-radius: 8px;
+    padding: 13px;
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+    .analiz-butonu:hover {
+        filter: brightness(1.1);
+    }
+
+    .analiz-butonu:active {
+        transform: scale(0.99);
+    }
+
+    .analiz-butonu:disabled {
+        opacity: 0.6;
+        cursor: progress;
+    }
+
+/* ---------------------------------------------------------------- SONUÇLAR VE ANİMASYONLAR */
+.bos-durum {
+    position: relative;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--c-metin-soluk);
+    border: 1px dashed var(--c-cizgi);
+    border-radius: 10px;
+    overflow: hidden;
+    text-align: center;
+}
+
+    .bos-durum p {
+        font-size: 0.9rem;
+        line-height: 1.6;
+        z-index: 1;
+    }
+
+    .bos-durum span {
+        font-size: 0.8rem;
+        opacity: 0.7;
+    }
+
+.tarama-cizgisi {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--c-scan), transparent);
+    opacity: 0.6;
+    animation: tarama 3.2s ease-in-out infinite;
+}
+
+@keyframes tarama {
+    0% {
+        top: 8%;
+        opacity: 0;
+    }
+
+    15% {
+        opacity: 0.6;
+    }
+
+    50% {
+        top: 92%;
+        opacity: 0.6;
+    }
+
+    65% {
+        opacity: 0;
+    }
+
+    100% {
+        top: 92%;
+        opacity: 0;
+    }
+}
+
+.sonuc-goruntu-sarici {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--c-cizgi);
+    margin-bottom: 20px;
+}
+
+#sonuc-goruntu {
+    width: 100%;
+    display: block;
+}
+
+.tespit-ozet {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+}
+
+.ozet-kutu {
+    flex-shrink: 0;
+    background: var(--c-panel-ust);
+    border: 1px solid var(--c-cizgi);
+    border-radius: 10px;
+    padding: 14px 18px;
+    text-align: center;
+    min-width: 110px;
+}
+
+.ozet-sayi {
+    display: block;
+    font-family: var(--f-display);
+    font-size: 2.1rem;
+    font-weight: 700;
+    color: var(--c-amber);
+    line-height: 1;
+    animation: dikkat_cek 2s infinite ease-in-out; /* Hekimin dikkatini çeken nabız animasyonu */
+}
+
+@keyframes dikkat_cek {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
+.ozet-etiket {
+    font-size: 0.72rem;
+    color: var(--c-metin-soluk);
+}
+
+.tespit-listesi {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+}
+
+    .tespit-listesi li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--c-cizgi);
+        font-size: 0.85rem;
+    }
+
+        .tespit-listesi li:last-child {
+            border-bottom: none;
+        }
+
+.tespit-sinif {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.renk-noktasi {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--c-amber);
+}
+
+.tespit-guven {
+    font-family: var(--f-mono);
+    color: var(--c-metin-soluk);
+    font-size: 0.78rem;
+}
+
+.pdf-indir {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--c-scan-soluk);
+    color: var(--c-scan);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: background 0.15s ease;
+}
+
+    .pdf-indir:hover {
+        background: var(--c-scan-soluk);
+    }
+
+.hata-durum {
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #ff6b6b44;
+    background: #ff6b6b14;
+    color: var(--c-hata);
+    font-size: 0.87rem;
+    line-height: 1.5;
+}

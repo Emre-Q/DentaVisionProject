@@ -1,0 +1,24 @@
+# Python  Sanal Ortam
+.venv
+__pycache__
+.pyc
+.env
+
+# Veri Setleri (Sadece klasör yapısı kalsın, içindeki binlerce resim gitmesin)
+dataimages
+datalabels
+
+# Model Ağırlıkları (Sadece klasör kalsın, ağır dosyalar gitmesin)
+models.pt
+models.onnx
+models.tflite
+
+# Uygulama Çalışma Zamanı (Runtime) Çıktıları
+uploads
+!uploads.gitkeep
+reports
+!reports.gitkeep
+
+# İşletim Sistemi Kalıntıları
+.DS_Store
+Thumbs.db

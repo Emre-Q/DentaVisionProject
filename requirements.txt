@@ -1,0 +1,35 @@
+# =========================================================
+# DentaVision - Bağımlılık Listesi
+# =========================================================
+# NOT: cv2 (opencv-python) SADECE dosya okuma/kaydetme (I/O) ve
+# YOLOv8'in kendi iç çalışması için mevcuttur. Ödevin şartı gereği
+# "ön işleme" (histogram germe/eşitleme, erosion) fonksiyonlarında
+# cv2'nin hazır fonksiyonları (örn. cv2.equalizeHist, cv2.erode,
+# cv2.normalize) KESİNLİKLE kullanılmamıştır. Bkz. src/preprocessing.py
+
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+python-multipart==0.0.9
+jinja2==3.1.4
+
+# Görüntü I/O (sadece dosya okuma/yazma ve YOLO çizim yardımcıları için)
+opencv-python-headless==4.10.0.84
+numpy==1.26.4
+Pillow==10.3.0
+
+# Yapay Zeka / Model
+ultralytics==8.2.50      # YOLOv8n-seg
+torch==2.3.1
+torchvision==0.18.1
+
+# Edge AI (opsiyonel çıkarım motorları)
+onnx==1.16.1
+onnxruntime==1.18.0
+tensorflow==2.16.1        # TFLite dönüşümü/çıkarımı için (opsiyonel, ağır ise kaldırılabilir)
+
+# Raporlama (PDF)
+reportlab==4.2.0
+
+# Yardımcı
+pydantic==2.7.4
+python-dotenv==1.0.1

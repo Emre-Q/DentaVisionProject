@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DentaVision — Panoramik Röntgen Analiz Sistemi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- ÜST ÇUBUK -->
+  <header class="ust-cubuk">
+    <div class="logo-grubu">
+      <svg class="logo-ikon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 4C13 4 8 9 8 15c0 4 1.5 6.5 2.5 9.5C11.5 27.5 12 30 12 33c0 1.6 1.4 3 3 3s2.5-1.2 2.7-2.7c.3-2.5.3-6 2.3-6s2 3.5 2.3 6c.2 1.5 1.1 2.7 2.7 2.7s3-1.4 3-3c0-3 .5-5.5 1.5-8.5C30.5 21.5 32 19 32 15c0-6-5-11-12-11Z" stroke="var(--c-scan)" stroke-width="1.6"/>
+        <line x1="20" y1="10" x2="20" y2="30" stroke="var(--c-scan)" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
+      </svg>
+      <div>
+        <span class="logo-metin">DentaVision</span>
+        <span class="logo-alt">Panoramik Röntgen Analiz Sistemi</span>
+      </div>
+    </div>
+    <div class="durum-gostergesi">
+      <span class="durum-nokta"></span>
+      <span id="backend-etiketi">model: kontrol ediliyor…</span>
+    </div>
+  </header>
+
+  <main class="ana-govde">
+
+    <!-- SOL PANEL: HASTA FORMU -->
+    <section class="panel form-panel">
+      <div class="panel-baslik">
+        <span class="panel-no">01</span>
+        <h2>Hasta Bilgileri</h2>
+      </div>
+
+      <form id="analiz-formu">
+        <div class="alan-grubu">
+          <label for="ad">Ad</label>
+          <input type="text" id="ad" name="ad" required autocomplete="off">
+        </div>
+        <div class="alan-grubu">
+          <label for="soyad">Soyad</label>
+          <input type="text" id="soyad" name="soyad" required autocomplete="off">
+        </div>
+        <div class="alan-grubu">
+          <label for="tc_kimlik">TC Kimlik No</label>
+          <input type="text" id="tc_kimlik" name="tc_kimlik" maxlength="11" pattern="\d{11}" required class="mono" autocomplete="off">
+        </div>
+        <div class="alan-grubu">
+          <label for="yas">Yaş</label>
+          <input type="number" id="yas" name="yas" min="0" max="120" required class="mono">
+        </div>
+        <div class="alan-grubu">
+          <label for="sikayet">Şikayet / Geliş Nedeni</label>
+          <textarea id="sikayet" name="sikayet" rows="3" placeholder="Örn: sağ alt çenede ağrı, 3 gündür…"></textarea>
+        </div>
+
+        <div class="panel-baslik ikinci">
+          <span class="panel-no">02</span>
+          <h2>Panoramik Röntgen</h2>
+        </div>
+
+        <label id="dropzone" for="xray_dosyasi" class="lightbox-yukleme">
+          <input type="file" id="xray_dosyasi" name="xray_dosyasi" accept="image/*" required hidden>
+          <div class="lightbox-cerceve">
+            <span class="kose ku"></span><span class="kose kg"></span>
+            <span class="kose au"></span><span class="kose ag"></span>
+            <img id="onizleme-goruntu" class="onizleme" hidden>
+            <div id="yukleme-ipucu" class="yukleme-ipucu">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 4v12m0-12 4 4m-4-4-4 4M5 18h14" stroke="var(--c-scan)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <p>Röntgen görüntüsünü buraya sürükleyin<br><span>veya seçmek için tıklayın</span></p>
+            </div>
+          </div>
+        </label>
+
+        <button type="submit" id="analiz-butonu" class="analiz-butonu">
+          <span class="btn-metin">Analizi Başlat</span>
+          <span class="btn-yukleniyor" hidden>İşleniyor…</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- SAĞ PANEL: SONUÇ EKRANI -->
+    <section class="panel sonuc-panel">
+      <div class="panel-baslik">
+        <span class="panel-no">03</span>
+        <h2>Analiz Sonucu</h2>
+      </div>
+
+      <div id="bos-durum" class="bos-durum">
+        <div class="tarama-cizgisi"></div>
+        <p>Sonuçlar burada görüntülenecek.<br><span>Soldaki formu doldurup röntgeni yükleyin.</span></p>
+      </div>
+
+      <div id="sonuc-icerik" class="sonuc-icerik" hidden>
+        <div class="sonuc-goruntu-sarici">
+          <img id="sonuc-goruntu" alt="İşaretlenmiş röntgen">
+        </div>
+
+        <div class="tespit-ozet">
+          <div class="ozet-kutu">
+            <span class="ozet-sayi" id="tespit-sayisi">0</span>
+            <span class="ozet-etiket">bulgu tespit edildi</span>
+          </div>
+          <ul id="tespit-listesi" class="tespit-listesi"></ul>
+        </div>
+
+        <a id="pdf-link" class="pdf-indir" href="#" target="_blank">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ön Teşhis Raporunu İndir (PDF)
+        </a>
+      </div>
+
+      <div id="hata-durum" class="hata-durum" hidden></div>
+    </section>
+
+  </main>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>
