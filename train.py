@@ -7,8 +7,8 @@
 #
 # ÖZELLİKLER:
 #   1) Tam Determinizm: Aynı kod + aynı veri = Her zaman aynı sonuç.
-#   2) Otomatik Checkpoint: En iyi doğrulama skoruna sahip modeli otomatik
-#      olarak 'models/best_model.pt' yoluna kopyalar.
+#   2) Otomatik Checkpoint: En iyi modeli 'models/best_model.pt' yoluna kopyalar.
+#   3) RESUME (Devam Etme): Kopan/durdurulan eğitimlere kaldığı yerden devam eder.
 # =============================================================================
 
 import os
@@ -26,50 +26,34 @@ from ultralytics import YOLO
 # 1) DETERMİNİZM: Rastgelelik Kaynaklarını Sabitleme
 # -----------------------------------------------------------------------------
 def seed_sabitle(seed: int = 42):
-    """
-    Eğitimin tekrarlanabilir olması için Python, NumPy ve PyTorch'un
-    (CPU/GPU) tüm rastgele sayı üreteçlerini aynı tohum değerine sabitler.
-    """
     random.seed(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
-
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-
-    # cuDNN algoritma seçimini donanımdan bağımsız hale getirir
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
-
     print(f"[SEED] Deterministik mod aktif. Tüm rastgelelik kaynakları seed={seed} ile sabitlendi.")
 
 
 # -----------------------------------------------------------------------------
-# 2) EN İYİ MODELİ KAYDEDEN CALLBACK SİNİFİ
+# 2) EN İYİ MODELİ KAYDEDEN CALLBACK SINIFI
 # -----------------------------------------------------------------------------
 class EnIyiModelKaydedici:
-    """
-    Her epoch sonunda Ultralytics'in skorlarını kontrol eder.
-    İyileşme varsa modeli proje köküne 'best_model.pt' olarak yedekler.
-    """
-
     def __init__(self, hedef_yol: str = "models/best_model.pt"):
         self.hedef_yol = Path(hedef_yol)
         self.hedef_yol.parent.mkdir(parents=True, exist_ok=True)
-        self.en_iyi_skor = -1.0  # Başlangıç skoru
+        self.en_iyi_skor = -1.0
 
     def __call__(self, trainer):
         mevcut_fitness = float(trainer.fitness) if trainer.fitness is not None else -1.0
-
         if mevcut_fitness > self.en_iyi_skor:
             self.en_iyi_skor = mevcut_fitness
             kaynak = Path(trainer.best)
-
             if kaynak.exists():
                 shutil.copy(kaynak, self.hedef_yol)
-                print(f"[BEST-CHECKPOINT] Epoch {trainer.epoch}: "
-                      f"Yeni skor = {mevcut_fitness:.5f} -> '{self.hedef_yol}' kaydedildi.")
+                print(f"[BEST-CHECKPOINT] Epoch {trainer.epoch}: Yeni skor = {mevcut_fitness:.5f} -> kaydedildi.")
 
 
 # -----------------------------------------------------------------------------
@@ -81,22 +65,21 @@ def egit(
         imgsz: int = 640,
         batch: int = 16,
         seed: int = 42,
-        model_agirlik: str = "yolov8n.pt",  # MİMARİ GÜNCELLEME: seg silindi
+        model_agirlik: str = "yolov8n.pt",
         proje_adi: str = "dentavision_egitim",
+        resume: bool = False  # <--- YENİ EKLENEN YETENEK
 ):
-    # 1) Determinizmi başlat
     seed_sabitle(seed)
 
-    # 2) Edge cihazlar için hafif olan Nano (n) model ağırlıklarını yükle
+    # Modeli yükle (Eğer resume true ise last.pt yüklenecek, false ise yolov8n.pt)
     model = YOLO(model_agirlik)
 
-    # 3) Checkpoint mekanizmasını Ultralytics'e bağla
     en_iyi_kaydedici = EnIyiModelKaydedici()
     model.add_callback("on_fit_epoch_end", en_iyi_kaydedici)
 
-    # 4) Eğitimi başlat
+    # Eğitimi başlat
     sonuc = model.train(
-        task="detect",       # MİMARİ GÜNCELLEME: Segmentasyon yerine Kutu Tespiti zorunlu kılındı
+        task="detect",
         data=veri_yaml,
         epochs=epochs,
         imgsz=imgsz,
@@ -107,8 +90,9 @@ def egit(
         name="run",
         exist_ok=True,
         patience=20,
+        resume=resume,  # <--- EĞİTİME KALDIĞI YERDEN DEVAM ETME EMRİ
 
-        # --- Medikal Görüntülere (X-Ray) Özel Augmentasyon Ayarları ---
+        # Medikal Görüntülere (X-Ray) Özel Augmentasyon Ayarları
         hsv_h=0.0,
         hsv_s=0.0,
         hsv_v=0.2,
@@ -121,10 +105,9 @@ def egit(
 
     print("\n" + "=" * 70)
     print(f"Eğitim tamamlandı. En iyi skor: {en_iyi_kaydedici.en_iyi_skor:.5f}")
-    print(f"Model şuraya kaydedildi: models/best_model.pt")
     print("=" * 70)
 
-    # 5) Doğrulama seti metrikleri (MİMARİ GÜNCELLEME: .seg yerine .box kullanıldı)
+    # Doğrulama seti metrikleri
     metrikler = model.val()
     print(f"mAP50(box): {metrikler.box.map50:.4f} | mAP50-95(box): {metrikler.box.map:.4f}")
 
@@ -136,13 +119,16 @@ def egit(
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DentaVision - Kaggle YOLOv8n Eğitim Scripti")
-    parser.add_argument("--data", type=str, default="data/dataset.yaml",
-                        help="Kaggle veri setinin dataset.yaml yolu")
+    parser.add_argument("--data", type=str, default="data/dataset.yaml")
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--batch", type=int, default=16)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--weights", type=str, default="yolov8n.pt") # MİMARİ GÜNCELLEME
+    parser.add_argument("--weights", type=str, default="yolov8n.pt")
+
+    # Koda dışarıdan müdahale edebilmek için --resume anahtarı eklendi
+    parser.add_argument("--resume", action="store_true", help="Eğitime kaldığı yerden devam eder")
+
     args = parser.parse_args()
 
     egit(
@@ -152,4 +138,5 @@ if __name__ == "__main__":
         batch=args.batch,
         seed=args.seed,
         model_agirlik=args.weights,
+        resume=args.resume  # Terminalden gelen emri fonksiyona iletiyoruz
     )
