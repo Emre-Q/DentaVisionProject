@@ -2,8 +2,8 @@
 # DentaVision - train.py
 # =============================================================================
 # AMAÇ:
-#   Kaggle Dental Disease Panoramic Dataset (31 sınıf) üzerinde YOLOv8n-seg
-#   modelini deterministik (tekrarlanabilir) şekilde eğitmek.
+#   Kaggle Dental Disease Panoramic Dataset (31 sınıf) üzerinde YOLOv8n
+#   (Detection) modelini deterministik (tekrarlanabilir) şekilde eğitmek.
 #
 # ÖZELLİKLER:
 #   1) Tam Determinizm: Aynı kod + aynı veri = Her zaman aynı sonuç.
@@ -81,7 +81,7 @@ def egit(
         imgsz: int = 640,
         batch: int = 16,
         seed: int = 42,
-        model_agirlik: str = "yolov8n-seg.pt",
+        model_agirlik: str = "yolov8n.pt",  # MİMARİ GÜNCELLEME: seg silindi
         proje_adi: str = "dentavision_egitim",
 ):
     # 1) Determinizmi başlat
@@ -96,6 +96,7 @@ def egit(
 
     # 4) Eğitimi başlat
     sonuc = model.train(
+        task="detect",       # MİMARİ GÜNCELLEME: Segmentasyon yerine Kutu Tespiti zorunlu kılındı
         data=veri_yaml,
         epochs=epochs,
         imgsz=imgsz,
@@ -105,15 +106,15 @@ def egit(
         project=proje_adi,
         name="run",
         exist_ok=True,
-        patience=20,  # 20 epoch boyunca iyileşme olmazsa eğitimi durdur (Early Stopping)
+        patience=20,
 
         # --- Medikal Görüntülere (X-Ray) Özel Augmentasyon Ayarları ---
-        hsv_h=0.0,  # X-Ray siyah-beyazdır, renk tonu değişimi YASAK.
-        hsv_s=0.0,  # Doygunluk değişimi YASAK.
-        hsv_v=0.2,  # Farklı röntgen cihazlarının parlaklık farklarını simüle eder.
-        flipud=0.0,  # Anatomik olarak alt/üst çene ters dönemeyeceği için YASAK.
-        fliplr=0.5,  # Çene sağ-sol simetrik olduğu için AÇIK.
-        degrees=5.0,  # Hastanın başını hafif eğimli tutma ihtimalini simüle eder.
+        hsv_h=0.0,
+        hsv_s=0.0,
+        hsv_v=0.2,
+        flipud=0.0,
+        fliplr=0.5,
+        degrees=5.0,
         translate=0.05,
         scale=0.3,
     )
@@ -123,9 +124,9 @@ def egit(
     print(f"Model şuraya kaydedildi: models/best_model.pt")
     print("=" * 70)
 
-    # 5) Doğrulama seti metrikleri
+    # 5) Doğrulama seti metrikleri (MİMARİ GÜNCELLEME: .seg yerine .box kullanıldı)
     metrikler = model.val()
-    print(f"mAP50(mask): {metrikler.seg.map50:.4f} | mAP50-95(mask): {metrikler.seg.map:.4f}")
+    print(f"mAP50(box): {metrikler.box.map50:.4f} | mAP50-95(box): {metrikler.box.map:.4f}")
 
     return sonuc
 
@@ -134,14 +135,14 @@ def egit(
 # 4) TERMİNAL (CLI) ARAYÜZÜ
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="DentaVision - Kaggle YOLOv8n-seg Eğitim Scripti")
+    parser = argparse.ArgumentParser(description="DentaVision - Kaggle YOLOv8n Eğitim Scripti")
     parser.add_argument("--data", type=str, default="data/dataset.yaml",
                         help="Kaggle veri setinin dataset.yaml yolu")
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--batch", type=int, default=16)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--weights", type=str, default="yolov8n-seg.pt")
+    parser.add_argument("--weights", type=str, default="yolov8n.pt") # MİMARİ GÜNCELLEME
     args = parser.parse_args()
 
     egit(

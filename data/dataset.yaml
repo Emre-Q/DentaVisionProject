@@ -1,17 +1,19 @@
 # =============================================================================
-# DentaVision - dataset.yaml
-# Kaggle Dental Disease Panoramic Dataset (31 Sınıf)
+# DentaVision - dataset.yaml (Nihai ve Kusursuz Sürüm)
 # =============================================================================
 
-# Eğitim, doğrulama ve test görüntülerinin yolları
-# (app.py ve train.py'nin çalıştığı ana dizine göre göreceli yollar)
-train: data/images/train
-val: data/images/val
-test: data/images/test  # <--- YENİ EKLENEN SATIR
-# Toplam sınıf sayısı
+# 1. Kök Dizin
+path: data  
+
+# 2. Senin Yeni Klasör Hiyerarşin (Önce split, sonra tip)
+train: train/images
+val: valid/images
+test: test/images
+
+# 3. Toplam sınıf sayısı
 nc: 31
 
-# Sınıf isimleri (ID'ler etiket dosyalarındaki numaralarla birebir eşleşir)
+# 4. Orijinal ve Doğru Sınıf İsimlerin
 names:
   0: Caries
   1: Crown
@@ -44,4 +46,3 @@ names:
   28: Cyst
   29: Root resorption
   30: Primary teeth
-  
