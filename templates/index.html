@@ -1,125 +1,240 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DentaVision — Panoramik Röntgen Analiz Sistemi</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
+'use client';
 
-  <!-- ÜST ÇUBUK -->
-  <header class="ust-cubuk">
-    <div class="logo-grubu">
-      <svg class="logo-ikon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 4C13 4 8 9 8 15c0 4 1.5 6.5 2.5 9.5C11.5 27.5 12 30 12 33c0 1.6 1.4 3 3 3s2.5-1.2 2.7-2.7c.3-2.5.3-6 2.3-6s2 3.5 2.3 6c.2 1.5 1.1 2.7 2.7 2.7s3-1.4 3-3c0-3 .5-5.5 1.5-8.5C30.5 21.5 32 19 32 15c0-6-5-11-12-11Z" stroke="var(--c-scan)" stroke-width="1.6"/>
-        <line x1="20" y1="10" x2="20" y2="30" stroke="var(--c-scan)" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
-      </svg>
-      <div>
-        <span class="logo-metin">DentaVision</span>
-        <span class="logo-alt">Panoramik Röntgen Analiz Sistemi</span>
-      </div>
-    </div>
-    <div class="durum-gostergesi">
-      <span class="durum-nokta"></span>
-      <span id="backend-etiketi">model: kontrol ediliyor…</span>
-    </div>
-  </header>
+import React, { useState } from 'react';
+import PatientForm from '../components/PatientForm';
+import ImageUploader from '../components/ImageUploader';
+import ResultViewer from '../components/ResultViewer';
+import { Upload, Scan, FileText, ArrowLeft, Brain, AlertCircle } from 'lucide-react';
 
-  <main class="ana-govde">
+// ============================================================================
+// TİP TANIMLAMALARI (TypeScript Interfaces)
+// Backend'deki schemas.py (Pydantic) modelleriyle %100 senkronize çalışır.
+// Bu sayede derleme (build) aşamasında tip güvenliği sağlanır.
+// ============================================================================
+interface PatientData {
+  ad: string;
+  soyad: string;
+  tc_kimlik: string;
+  yas: number;
+  sikayet?: string;
+}
 
-    <!-- SOL PANEL: HASTA FORMU -->
-    <section class="panel form-panel">
-      <div class="panel-baslik">
-        <span class="panel-no">01</span>
-        <h2>Hasta Bilgileri</h2>
-      </div>
+interface DetectionResult {
+  sinif_adi: string;
+  guven_skoru: number;
+  bbox: number[];
+}
 
-      <form id="analiz-formu">
-        <div class="alan-grubu">
-          <label for="ad">Ad</label>
-          <input type="text" id="ad" name="ad" required autocomplete="off">
-        </div>
-        <div class="alan-grubu">
-          <label for="soyad">Soyad</label>
-          <input type="text" id="soyad" name="soyad" required autocomplete="off">
-        </div>
-        <div class="alan-grubu">
-          <label for="tc_kimlik">TC Kimlik No</label>
-          <input type="text" id="tc_kimlik" name="tc_kimlik" maxlength="11" pattern="\d{11}" required class="mono" autocomplete="off">
-        </div>
-        <div class="alan-grubu">
-          <label for="yas">Yaş</label>
-          <input type="number" id="yas" name="yas" min="0" max="120" required class="mono">
-        </div>
-        <div class="alan-grubu">
-          <label for="sikayet">Şikayet / Geliş Nedeni</label>
-          <textarea id="sikayet" name="sikayet" rows="3" placeholder="Örn: sağ alt çenede ağrı, 3 gündür…"></textarea>
-        </div>
+interface AnalysisResponse {
+  success?: boolean;
+  hasta: PatientData;
+  tespitler: DetectionResult[];
+  isaretlenmis_goruntu_url: string;
+  rapor_pdf_url: string;
+  on_isleme_yontemi: string;
+  toplam_tespit_sayisi: number;
+}
 
-        <div class="panel-baslik ikinci">
-          <span class="panel-no">02</span>
-          <h2>Panoramik Röntgen</h2>
-        </div>
+export default function DentaVisionApp() {
+  // --- STATE YÖNETİMİ ---
+  const [step, setStep] = useState<'form' | 'upload' | 'analyzing' | 'result'>('form');
+  const [patientData, setPatientData] = useState<PatientData | null>
+    (null);
+    const [imageUrl, setImageUrl] = useState<string>
+        ('');
+        const [result, setResult] = useState<AnalysisResponse | null>
+            (null);
+            const [errorMsg, setErrorMsg] = useState<string | null>
+                (null);
 
-        <label id="dropzone" for="xray_dosyasi" class="lightbox-yukleme">
-          <input type="file" id="xray_dosyasi" name="xray_dosyasi" accept="image/*" required hidden>
-          <div class="lightbox-cerceve">
-            <span class="kose ku"></span><span class="kose kg"></span>
-            <span class="kose au"></span><span class="kose ag"></span>
-            <img id="onizleme-goruntu" class="onizleme" hidden>
-            <div id="yukleme-ipucu" class="yukleme-ipucu">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 4v12m0-12 4 4m-4-4-4 4M5 18h14" stroke="var(--c-scan)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <p>Röntgen görüntüsünü buraya sürükleyin<br><span>veya seçmek için tıklayın</span></p>
-            </div>
-          </div>
-        </label>
+                // 1. ADIM: Hasta bilgileri formdan alınır ve state'e kaydedilir.
+                const handlePatientSubmit = (data: PatientData) => {
+                setPatientData(data);
+                setErrorMsg(null);
+                setStep('upload');
+                };
 
-        <button type="submit" id="analiz-butonu" class="analiz-butonu">
-          <span class="btn-metin">Analizi Başlat</span>
-          <span class="btn-yukleniyor" hidden>İşleniyor…</span>
-        </button>
-      </form>
-    </section>
+                // 2. ADIM: Görüntü seçilir seçilmez analiz süreci tetiklenir.
+                // Not: ImageUploader component'inin artık doğrudan JavaScript 'File' objesi dönmesi gerekir.
+                const handleImageUploaded = (file: File, previewUrl: string) => {
+                setImageUrl(previewUrl);
+                setStep('analyzing');
+                analyzeImage(file);
+                };
 
-    <!-- SAĞ PANEL: SONUÇ EKRANI -->
-    <section class="panel sonuc-panel">
-      <div class="panel-baslik">
-        <span class="panel-no">03</span>
-        <h2>Analiz Sonucu</h2>
-      </div>
+                // 3. ADIM: FastAPI Sunucusu ile İletişim (Inference Tetikleme)
+                const analyzeImage = async (imageFile: File) => {
+                if (!patientData) return;
 
-      <div id="bos-durum" class="bos-durum">
-        <div class="tarama-cizgisi"></div>
-        <p>Sonuçlar burada görüntülenecek.<br><span>Soldaki formu doldurup röntgeni yükleyin.</span></p>
-      </div>
+                // FastAPI tarafı JSON değil, dosya ve form verisini aynı anda (multipart)
+                // beklediği için FormData nesnesi oluşturuyoruz.
+                const formData = new FormData();
+                formData.append('ad', patientData.ad);
+                formData.append('soyad', patientData.soyad);
+                formData.append('tc_kimlik', patientData.tc_kimlik);
+                formData.append('yas', patientData.yas.toString());
+                formData.append('sikayet', patientData.sikayet || '');
+                formData.append('xray_dosyasi', imageFile);
 
-      <div id="sonuc-icerik" class="sonuc-icerik" hidden>
-        <div class="sonuc-goruntu-sarici">
-          <img id="sonuc-goruntu" alt="İşaretlenmiş röntgen">
-        </div>
+                try {
+                // CORS ayarları yapılmış FastAPI sunucusuna (varsayılan: 8000) doğrudan istek atılır
+                const res = await fetch('http://localhost:8000/analiz', {
+                method: 'POST',
+                body: formData, // JSON.stringify YASAK - Dosya transferi FormData ile yapılır
+                });
 
-        <div class="tespit-ozet">
-          <div class="ozet-kutu">
-            <span class="ozet-sayi" id="tespit-sayisi">0</span>
-            <span class="ozet-etiket">bulgu tespit edildi</span>
-          </div>
-          <ul id="tespit-listesi" class="tespit-listesi"></ul>
-        </div>
+                if (!res.ok) {
+                const errData = await res.json().catch(() => null);
+                throw new Error(errData?.detail || 'Sunucu ile iletişim kurulamadı.');
+                }
 
-        <a id="pdf-link" class="pdf-indir" href="#" target="_blank">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Ön Teşhis Raporunu İndir (PDF)
-        </a>
-      </div>
+                // 4. ADIM: Başarılı Yanıtın İşlenmesi
+                const data: AnalysisResponse = await res.json();
 
-      <div id="hata-durum" class="hata-durum" hidden></div>
-    </section>
+                // FastAPI'den dönen URL'ler relative (/uploads/...) olduğu için,
+                // resimlerin doğru görünmesi adına başına localhost:8000 ekliyoruz.
+                data.isaretlenmis_goruntu_url = `http://localhost:8000${data.isaretlenmis_goruntu_url}`;
+                data.rapor_pdf_url = `http://localhost:8000${data.rapor_pdf_url}`;
 
-  </main>
+                setResult(data);
+                setStep('result');
 
-  <script src="/static/js/main.js"></script>
-</body>
-</html>
+                } catch (err: any) {
+                console.error("[API HATASI]:", err);
+                setErrorMsg(err.message || 'Analiz sırasında beklenmeyen bir hata oluştu.');
+                setStep('upload'); // Kullanıcıyı tekrar dosya seçme ekranına geri atar (UX İyileştirmesi)
+                }
+                };
+
+                // Sistemi sıfırlayıp yeni hastaya hazırlama
+                const resetApp = () => {
+                setStep('form');
+                setPatientData(null);
+                setImageUrl('');
+                setResult(null);
+                setErrorMsg(null);
+                };
+
+                return (
+                <div className="min-h-screen bg-[#0a0f1c] text-white overflow-hidden">
+                    {/* ---------------- NAVBAR ---------------- */}
+                    <nav className="border-b border-white/10 bg-black/40 backdrop-blur-xl fixed w-full z-50">
+                        <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 bg-gradient-to-br from-cyan-400 to-teal-400 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/50">
+                                        <Brain className="w-5 h-5 text-slate-950" />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-3xl font-bold tracking-tighter bg-gradient-to-r from-white to-cyan-300 bg-clip-text text-transparent">
+                                            DentaVision
+                                        </h1>
+                                        <p className="text-[10px] text-teal-400 -mt-1 font-mono">
+                                            AI • KAGGLE-31 • YOLOv8-seg
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-8 text-sm">
+                                <div className="flex items-center gap-2 text-emerald-400">
+                                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                                    SİSTEM AKTİF
+                                </div>
+                                <button onClick={resetApp}
+                                        className="flex items-center gap-2 px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all text-sm font-medium">
+                                    <ArrowLeft className="w-4 h-4" />
+                                    Yeni Analiz
+                                </button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    {/* ---------------- ANA İÇERİK (GOVDE) ---------------- */}
+                    <div className="pt-24 max-w-7xl mx-auto px-8 pb-16">
+
+                        {/* Kahraman (Hero) Bölümü */}
+                        <div className="mb-12 text-center">
+                            <div className="inline-flex items-center gap-2 bg-white/5 text-teal-400 text-xs font-medium tracking-widest px-6 py-2 rounded-3xl border border-teal-400/20 mb-6">
+                                KAGGLE 31-SINIFLI VERİ SETİ İLE EĞİTİLDİ • v2.0
+                            </div>
+                            <h2 className="text-6xl font-bold tracking-tighter mb-4">
+                                Panoramik Röntgenlerde<br />
+                                <span className="bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-300 bg-clip-text text-transparent">
+                                    Anomali Tespiti
+                                </span>
+                            </h2>
+                            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+                                YOLOv8-seg modeli ile hedef patolojileri ayırır; çürük, kök lezyonları ve kemik kayıplarını yüksek doğrulukla tespit eder.
+                            </p>
+                        </div>
+
+                        {/* Hata Bildirim Banner'ı (UX) */}
+                        {errorMsg && (
+                        <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 max-w-2xl mx-auto">
+                            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                            <p className="text-sm font-medium">{errorMsg}</p>
+                        </div>
+                        )}
+
+                        {/* ---------------- ADIM YÖNETİMİ (ROUTING GİBİ ÇALIŞIR) ---------------- */}
+                        <div className="p-8">
+
+                            {/* Adım 1: Hasta Formu */}
+                            {step === 'form' && (
+                            <PatientForm onSubmit={handlePatientSubmit} />
+                            )}
+
+                            {/* Adım 2: Resim Yükleme Alanı */}
+                            {step === 'upload' && patientData && (
+                            <ImageUploader patient={patientData}
+                                           onImageUploaded={handleImageUploaded} />
+                            )}
+
+                            {/* Adım 3: AI İşlem Bekleme Ekranı (Animasyonlu) */}
+                            {step === 'analyzing' && (
+                            <div className="flex flex-col items-center justify-center min-h-[50vh]">
+                                <div className="relative">
+                                    <div className="w-24 h-24 border-8 border-teal-500/30 rounded-full"></div>
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-8 border-t-cyan-400 border-r-cyan-400 border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+                                </div>
+
+                                <h3 className="text-3xl font-semibold mt-10 mb-4 tracking-tight">AI Model Çalışıyor</h3>
+                                <p className="text-slate-400 text-center max-w-lg text-lg">
+                                    Görüntü manuel piksel matematiği ile iyileştiriliyor.<br />
+                                    YOLOv8-seg ile hedef anomali sınıfları taranıyor.<br />
+                                    Maskeler mantıksal VE (AND) operatörü ile temizleniyor.
+                                </p>
+
+                                <div className="mt-16 grid grid-cols-3 gap-8 text-center w-full max-w-4xl">
+                                    <div className="bg-white/5 rounded-3xl p-6 border border-white/10">
+                                        <div className="text-cyan-400 text-sm font-mono mb-1">STEP 1</div>
+                                        <div className="font-medium">Ön İşleme</div>
+                                        <div className="text-xs text-slate-500 mt-1">CDF & Histogram Stretch</div>
+                                    </div>
+                                    <div className="bg-white/5 rounded-3xl p-6 border border-white/10">
+                                        <div className="text-cyan-400 text-sm font-mono mb-1">STEP 2</div>
+                                        <div className="font-medium">Inference</div>
+                                        <div className="text-xs text-slate-500 mt-1">Edge AI (ONNX/TFLite) Çıkarımı</div>
+                                    </div>
+                                    <div className="bg-white/5 rounded-3xl p-6 border border-white/10">
+                                        <div className="text-cyan-400 text-sm font-mono mb-1">STEP 3</div>
+                                        <div className="font-medium">Post-processing</div>
+                                        <div className="text-xs text-slate-500 mt-1">Manuel Erosion & Alfa-Karışım</div>
+                                    </div>
+                                </div>
+                            </div>
+                            )}
+
+                            {/* Adım 4: Sonuçların Render Edilmesi */}
+                            {step === 'result' && result && patientData && (
+                            <ResultViewer result={result}
+                                          patient={patientData}
+                                          onNewAnalysis={resetApp} />
+                            )}
+
+                        </div>
+                    </div>
+                </div>
+                );
+                }
